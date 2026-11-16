@@ -7,8 +7,8 @@ import { esc, pct, bytes, num, plural, ago, avatarUrl } from './format.js';
 
 const PAGE_SIZE = 25;
 
-/** The API's column definitions, in order, with how each value reads. */
-function cell(entry, key) {
+/** How one column's value reads, by column key. */
+function display(entry, key) {
   const v = entry.values?.[key];
   if (key === 'judge' || key === 'judge_low' || key === 'judge_high') return pct(v);
   if (key === 'bytes') return bytes(v);
@@ -16,24 +16,29 @@ function cell(entry, key) {
   return v ?? '—';
 }
 
+function avatarFor(e) {
+  if (!e.image) return '<span class="avatar none" aria-hidden="true">?</span>';
+  return `<img class="avatar" src="${esc(avatarUrl(e.image))}" alt="" width="28" height="28" loading="lazy" crossorigin="anonymous">`;
+}
+
 function row(e, columns) {
-  const avatar = e.image
-    ? `<img class="avatar" src="${esc(avatarUrl(e.image))}" alt="" width="28" height="28" loading="lazy" crossorigin="anonymous">`
-    : '<span class="avatar none" aria-hidden="true">?</span>';
-  const prize = e.prize_rank
-    ? `<span class="prize" title="Prize place">#${e.prize_rank}</span>`
-    : '';
-  const cells = columns.map((c) => `<td data-col="${esc(c.key)}">${esc(cell(e, c.key))}</td>`).join('');
+  const prize = e.prize_rank ? `<span class="prize" title="Prize place">#${e.prize_rank}</span>` : '';
+  const status = e.status && e.status !== 'finished' ? `<span class="entry-status">${esc(e.status)}</span>` : '';
+  const cells = columns.map((c) => `<td data-col="${esc(c.key)}">${esc(display(e, c.key))}</td>`).join('');
   return `<tr>
     <td class="rank">${num(e.rank)}${prize}</td>
     <td class="entry">
-      <a class="entry-link" href="#/u/${encodeURIComponent(e.handle)}">${avatar}<span class="handle">${esc(e.handle)}</span></a>
+      <a class="entry-link" href="#/u/${encodeURIComponent(e.handle)}">${avatarFor(e)}<span class="handle">${esc(e.handle)}</span></a>
       <span class="entry-title">${esc(e.title ?? '')}</span>
-      ${e.status && e.status !== 'finished' ? `<span class="entry-status">${esc(e.status)}</span>` : ''}
+      ${status}
     </td>
     ${cells}
     <td class="when"><time datetime="${esc(e.received_at)}">${ago(e.received_at)}</time></td>
   </tr>`;
+}
+
+function sortValue(e, key) {
+  return e.values?.[key] ?? e[key] ?? 0;
 }
 
 /**
@@ -50,11 +55,7 @@ export function leaderboardView(root, data, slug, state, onState) {
   if (state.sortKey) {
     const dir = state.sortDir === 'asc' ? 1 : -1;
     const key = state.sortKey;
-    shown = [...shown].sort((a, b) => {
-      const av = a.values?.[key] ?? a[key] ?? 0;
-      const bv = b.values?.[key] ?? b[key] ?? 0;
-      return (Number(av) - Number(bv)) * dir;
-    });
+    shown = [...shown].sort((a, b) => (Number(sortValue(a, key)) - Number(sortValue(b, key))) * dir);
   }
   const pages = Math.max(1, Math.ceil(shown.length / PAGE_SIZE));
   const page = Math.min(state.page, pages);
@@ -62,11 +63,15 @@ export function leaderboardView(root, data, slug, state, onState) {
   const phase = data.phase ?? {};
 
   const head = columns
-    .map(
-      (c) =>
-        `<th scope="col"><button type="button" data-sort="${esc(c.key)}" aria-sort="${state.sortKey === c.key ? (state.sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}">${esc(c.title)}${state.sortKey === c.key ? (state.sortDir === 'asc' ? ' ↑' : ' ↓') : ''}</button></th>`,
-    )
+    .map((c) => {
+      const active = state.sortKey === c.key;
+      const arrow = active ? (state.sortDir === 'asc' ? ' ↑' : ' ↓') : '';
+      const order = active ? (state.sortDir === 'asc' ? 'ascending' : 'descending') : 'none';
+      return `<th scope="col"><button type="button" data-sort="${esc(c.key)}" aria-sort="${order}">${esc(c.title)}${arrow}</button></th>`;
+    })
     .join('');
+  const from = slice.length ? (page - 1) * PAGE_SIZE + 1 : 0;
+  const to = (page - 1) * PAGE_SIZE + slice.length;
 
   root.innerHTML = `
     <p class="crumbs"><a href="#/">All bounties</a> · <a href="#/bounty/${encodeURIComponent(slug)}">${esc(data.competition?.title ?? slug)}</a></p>
@@ -76,7 +81,7 @@ export function leaderboardView(root, data, slug, state, onState) {
       <label class="search"><span class="vh">Search the leaderboard</span>
         <input type="search" name="q" placeholder="Search handle or title…" value="${esc(state.q)}" autocomplete="off">
       </label>
-      <span class="count" aria-live="polite">Showing ${slice.length ? `${(page - 1) * PAGE_SIZE + 1}–${(page - 1) * PAGE_SIZE + slice.length}` : '0'} of ${num(shown.length)}</span>
+      <span class="count" aria-live="polite">Showing ${from}–${to} of ${num(shown.length)}</span>
     </form>
     <div class="table-wrap">
     <table class="lb">

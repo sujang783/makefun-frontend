@@ -1,13 +1,14 @@
-/* make.fun frontend: one stylesheet, system fonts, no downloads. */
+/* The make.fun frontend, in one stylesheet. System fonts only: nothing to
+   download. Colors and spacing live in the variables at the top. */
 
 :root {
   --ink: #17171c;
   --muted: #5b5b66;
   --line: #e3e3e8;
-  --bg: #fff;
+  --bg: #ffffff;
   --soft: #f6f6f8;
   --accent: #0b5cad;
-  --accent-ink: #fff;
+  --accent-ink: #ffffff;
   --good: #0d7a3f;
   --warn: #9a6200;
   --bad: #a02c2c;
@@ -29,6 +30,11 @@ a { color: var(--accent); }
 a:hover { text-decoration-thickness: 2px; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 
+h1 { font-size: 30px; line-height: 1.2; margin: 24px 0 8px; }
+h1:focus { outline: none; }
+h2 { font-size: 21px; margin: 32px 0 12px; }
+
+/* Screen-reader-only text, and the skip link that appears on focus. */
 .vh {
   position: absolute;
   width: 1px; height: 1px;
@@ -46,6 +52,7 @@ a:hover { text-decoration-thickness: 2px; }
 }
 .skip:focus { top: 8px; color: #fff; }
 
+/* Page chrome: header and footer. */
 .site {
   display: flex;
   align-items: baseline;
@@ -71,16 +78,15 @@ footer.site {
 .brand span { color: var(--accent); font-weight: 600; }
 nav[aria-label="Sections"] { display: flex; gap: 18px; }
 
-h1 { font-size: 30px; line-height: 1.2; margin: 24px 0 8px; }
-h1:focus { outline: none; }
-h2 { font-size: 21px; margin: 32px 0 12px; }
+/* Headings and supporting text. */
 .lede { color: var(--muted); margin: 0 0 8px; max-width: 70ch; }
 .strip { color: var(--muted); font-size: 14px; margin: 0 0 20px; }
 .count { color: var(--muted); font-size: 14px; }
 .crumbs { margin: 20px 0 0; font-size: 14px; color: var(--muted); }
 .note { color: var(--muted); font-size: 14px; }
+.sponsor { color: var(--muted); margin: 0 0 4px; }
 
-/* Toolbar: search, filters, sort. */
+/* The toolbar: search box, filters and sort. */
 .toolbar {
   display: flex;
   gap: 12px;
@@ -99,7 +105,11 @@ input[type="search"], select {
   background: var(--bg);
   width: 100%;
 }
-input[type="search"]:focus, select:focus { border-color: var(--accent); outline: 2px solid var(--accent); outline-offset: 1px; }
+input[type="search"]:focus, select:focus {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
 
 /* Board cards. */
 .grid {
@@ -120,7 +130,15 @@ input[type="search"]:focus, select:focus { border-color: var(--accent); outline:
 .card h2 { font-size: 18px; margin: 0; line-height: 1.35; }
 .card h2 a { color: var(--ink); text-decoration: none; }
 .card h2 a:hover { color: var(--accent); text-decoration: underline; }
-.meta { margin: 0; color: var(--muted); font-size: 14px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
 .cat {
   background: var(--soft);
   border-radius: 999px;
@@ -128,16 +146,24 @@ input[type="search"]:focus, select:focus { border-color: var(--accent); outline:
   font-size: 13px;
   color: var(--ink);
 }
-.badge {
-  border-radius: 999px;
-  padding: 2px 10px;
-  font-size: 13px;
-  font-weight: 600;
-}
+.badge { border-radius: 999px; padding: 2px 10px; font-size: 13px; font-weight: 600; }
 .badge.open { background: #e2f4e8; color: var(--good); }
 .badge.soon { background: #fdf0d3; color: var(--warn); }
 .badge.ended { background: var(--soft); color: var(--muted); }
 .summary { margin: 0; color: var(--muted); font-size: 14px; }
+.foot {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.fee { font-weight: 600; color: var(--ink); }
+
+/* Definition-list facts: the pot, time left and entries on a card, and the
+   hero facts on a bounty page and the record on a profile. */
 .facts {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -154,76 +180,114 @@ input[type="search"]:focus, select:focus { border-color: var(--accent); outline:
 .facts.hero { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin: 20px 0; }
 .facts.record { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); margin: 20px 0; }
 .facts.record dd { font-size: 22px; }
-.foot { margin: 0; font-size: 14px; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-.fee { font-weight: 600; color: var(--ink); }
-.sponsor { color: var(--muted); margin: 0 0 4px; }
 
-/* Tables. */
+/* Tables: rewards and leaderboards. */
 .table-wrap { overflow-x: auto; margin: 12px 0; }
 table { border-collapse: collapse; width: 100%; font-size: 15px; }
 caption { text-align: left; color: var(--muted); font-size: 14px; padding-bottom: 8px; }
 th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
-thead th { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); white-space: nowrap; }
+thead th {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  white-space: nowrap;
+}
 .rewards { max-width: 560px; }
 .rewards td:last-child, .rewards th:last-child { text-align: right; }
 .lb td.rank { font-weight: 700; white-space: nowrap; }
 .lb td:not(.entry) { white-space: nowrap; }
-.lb .entry-title { display: block; color: var(--muted); font-size: 13px; max-width: 52ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.entry-link { display: flex; align-items: center; gap: 8px; color: var(--ink); font-weight: 600; text-decoration: none; }
+.lb .entry-title {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  max-width: 52ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+th button {
+  font: inherit;
+  color: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+th button:hover { color: var(--accent); }
+
+/* Entries: links with handles, avatars and titles. */
+.entry-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+}
 .entry-link:hover { color: var(--accent); text-decoration: underline; }
 .avatar { border-radius: 50%; object-fit: cover; flex: none; }
 .avatar.none {
   width: 28px; height: 28px;
-  display: inline-grid; place-items: center;
-  background: var(--soft); color: var(--muted);
+  display: inline-grid;
+  place-items: center;
+  background: var(--soft);
+  color: var(--muted);
   font-size: 14px;
 }
 .prize { color: var(--warn); font-size: 13px; margin-left: 4px; }
 .entry-status { font-size: 12px; color: var(--warn); }
-th button {
-  font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit;
-  background: none; border: 0; padding: 0; cursor: pointer;
-}
-th button:hover { color: var(--accent); }
 
-/* Lists of entries. */
+/* Lists of entries (recent entries, solutions, payouts). */
 .entries { list-style: none; padding: 0; margin: 0; }
 .entries li {
-  display: flex; gap: 12px; flex-wrap: wrap; align-items: baseline;
-  padding: 9px 0; border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
 }
 .entries .entry-title { color: var(--muted); flex: 1 1 240px; }
 .entries time { color: var(--muted); font-size: 14px; margin-left: auto; }
 
-/* Pager. */
+/* Buttons and pagers. */
 .pager { display: flex; gap: 12px; align-items: center; margin: 16px 0; }
 .pager button, .btn {
-  font: inherit; cursor: pointer;
+  font: inherit;
+  cursor: pointer;
   padding: 8px 16px;
   border-radius: 8px;
   border: 1px solid var(--accent);
-  background: var(--accent); color: var(--accent-ink);
-  text-decoration: none; display: inline-block;
+  background: var(--accent);
+  color: var(--accent-ink);
+  text-decoration: none;
+  display: inline-block;
 }
 .pager button:disabled { opacity: 0.4; cursor: default; }
 .btn.ghost { background: var(--bg); color: var(--accent); }
 .actions { display: flex; gap: 12px; margin: 28px 0; flex-wrap: wrap; }
 
-/* Profile. */
+/* Profile header. */
 .profile-head { display: flex; gap: 20px; align-items: start; margin: 24px 0 8px; flex-wrap: wrap; }
 .pfp { border-radius: 50%; object-fit: cover; }
 .pfp.none {
   width: 96px; height: 96px;
-  display: inline-grid; place-items: center;
-  background: var(--soft); color: var(--muted);
-  font-size: 40px; border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  background: var(--soft);
+  color: var(--muted);
+  font-size: 40px;
+  border-radius: 50%;
 }
 .profile-head h1 { margin: 0; }
 .display-name { font-size: 18px; font-weight: 600; margin: 4px 0; }
 .bio { margin: 4px 0; max-width: 60ch; }
 .links { margin: 8px 0 0; font-size: 14px; }
 
-/* Prose (bounty description and rules). */
+/* Prose: bounty descriptions and rules. */
 .prose { max-width: 75ch; }
 .prose p { margin: 0 0 12px; }
 .prose h2 { margin-top: 28px; }
@@ -232,12 +296,16 @@ th button:hover { color: var(--accent); }
 .prose li { margin-bottom: 4px; }
 .prose code { background: var(--soft); padding: 1px 5px; border-radius: 4px; font-size: 14px; }
 
-/* States. */
+/* Loading and error states. */
 .loading, .error { margin: 48px 0; }
 .error button {
-  font: inherit; cursor: pointer;
-  padding: 8px 16px; border-radius: 8px;
-  border: 1px solid var(--accent); background: var(--accent); color: #fff;
+  font: inherit;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
 }
 
 @media (max-width: 640px) {

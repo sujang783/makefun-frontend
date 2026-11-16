@@ -6,8 +6,8 @@
 
 An entry for make.fun's [makefun-frontend-01 bounty](https://make.fun/bounty/makefun-frontend-01)
 ("Build the best make.fun frontend", $500 pot). A static frontend — no build
-step, no framework — that reads make.fun's public API alone and shows the four
-surfaces a visitor needs: the live bounty board, a bounty's page, its
+step, no framework — that talks to make.fun's public API alone and shows the
+four surfaces a visitor needs: the live bounty board, a bounty's page, its
 leaderboard, and an account's public profile, each reachable by a link and by
 its own URL.
 
@@ -17,7 +17,7 @@ its own URL.
 node serve.ts        # app/ on http://localhost:8080
 ```
 
-Open http://localhost:8080 in a desktop browser. Routes are hashes:
+Open http://localhost:8080 in a desktop browser. The routes are hashes:
 
 - `#/` — the board: every bounty with its live pot, entry fee, time left and entries
 - `#/bounty/<slug>` — one bounty: summary, rewards table with the live pot, dates, rules, recent entries

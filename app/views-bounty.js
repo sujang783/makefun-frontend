@@ -6,67 +6,73 @@
 import { esc, money, timeLeft, date, plural, ago } from './format.js';
 import { pot, phaseOf } from './views-board.js';
 
+/** Inline markdown: bold, code spans and links, on already-escaped text. */
+function inline(text) {
+  return esc(text)
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" rel="noopener">$1</a>');
+}
+
 /** A tiny markdown renderer: headings, bold, code, links, lists, paragraphs. */
 export function md(src) {
   const lines = String(src ?? '').split('\n');
-  let html = '';
-  let list = null;
-  const inline = (s) =>
-    esc(s)
-      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-      .replace(/`([^`]+)`/g, '<code>$1</code>')
-      .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" rel="noopener">$1</a>');
-  const closeList = () => {
-    if (list) {
-      html += `</${list}>`;
-      list = null;
-    }
+  const blocks = [];
+  let pending = null; // { tag: 'ul' | 'ol', items: [] }
+  const flush = () => {
+    if (!pending) return;
+    const items = pending.items.map((it) => `<li>${inline(it)}</li>`).join('');
+    blocks.push(`<${pending.tag}>${items}</${pending.tag}>`);
+    pending = null;
   };
-  for (const line of lines) {
-    const h = line.match(/^(#{1,3})\s+(.*)/);
-    if (h) {
-      closeList();
-      html += `<h${h[1].length + 1}>${inline(h[2])}</h${h[1].length + 1}>`;
+  for (const raw of lines) {
+    const heading = raw.match(/^(#{1,3})\s+(.*)$/);
+    if (heading) {
+      flush();
+      const level = heading[1].length + 1;
+      blocks.push(`<h${level}>${inline(heading[2])}</h${level}>`);
       continue;
     }
-    const li = line.match(/^\s*[-*]\s+(.*)/);
-    if (li) {
-      if (list !== 'ul') {
-        closeList();
-        html += '<ul>';
-        list = 'ul';
+    const bullet = raw.match(/^\s*[-*]\s+(.*)$/);
+    if (bullet) {
+      if (!pending || pending.tag !== 'ul') {
+        flush();
+        pending = { tag: 'ul', items: [] };
       }
-      html += `<li>${inline(li[1])}</li>`;
+      pending.items.push(bullet[1]);
       continue;
     }
-    const ol = line.match(/^\s*\d+[.)]\s+(.*)/);
-    if (ol) {
-      if (list !== 'ol') {
-        closeList();
-        html += '<ol>';
-        list = 'ol';
+    const numbered = raw.match(/^\s*\d+[.)]\s+(.*)$/);
+    if (numbered) {
+      if (!pending || pending.tag !== 'ol') {
+        flush();
+        pending = { tag: 'ol', items: [] };
       }
-      html += `<li>${inline(ol[1])}</li>`;
+      pending.items.push(numbered[1]);
       continue;
     }
-    if (!line.trim()) {
-      closeList();
+    if (!raw.trim()) {
+      flush();
       continue;
     }
-    closeList();
-    html += `<p>${inline(line)}</p>`;
+    flush();
+    blocks.push(`<p>${inline(raw)}</p>`);
   }
-  closeList();
-  return html;
+  flush();
+  return blocks.join('');
+}
+
+function medal(place) {
+  return Number(place) <= 3 ? ' 🏅' : '';
 }
 
 function rewardsTable(b) {
-  const now = b.rewardsNow;
-  if (Array.isArray(now) && now.length) {
-    const rows = now
+  const live = b.rewardsNow;
+  if (Array.isArray(live) && live.length) {
+    const rows = live
       .map(
         (r) => `<tr>
-          <td>${r.place}${Number(r.place) <= 3 ? ' 🏅' : ''}</td>
+          <td>${r.place}${medal(r.place)}</td>
           <td>${money(r.baseUsd)}</td>
           <td>${money(r.feeShareUsd)}</td>
           <td><strong>${money(r.amountUsd)}</strong></td>
@@ -79,15 +85,12 @@ function rewardsTable(b) {
       <tbody>${rows}</tbody>
     </table>`;
   }
-  const map = b.rewards ?? {};
-  const places = Object.keys(map)
+  const places = Object.keys(b.rewards ?? {})
     .map(Number)
     .sort((a, z) => a - z);
   if (!places.length) return '<p>No rewards table published yet.</p>';
   const rows = places
-    .map(
-      (p) => `<tr><td>${p}${p <= 3 ? ' 🏅' : ''}</td><td><strong>${money(map[p])}</strong></td></tr>`,
-    )
+    .map((p) => `<tr><td>${p}${medal(p)}</td><td><strong>${money(b.rewards[p])}</strong></td></tr>`)
     .join('');
   return `<table class="rewards">
     <caption>Rewards</caption>
@@ -128,6 +131,9 @@ export function bountyView(root, b) {
   const sponsor = b.sponsor
     ? `<p class="sponsor">Sponsored by ${esc(b.sponsor.name)}${b.sponsor.isVerified ? ' ✓' : ''}</p>`
     : '';
+  const fees = b.entryFeesUsd
+    ? `<div><dt>Fees paid in</dt><dd>${money(b.entryFeesUsd)} from ${plural(b.entryFeePayers ?? 0, 'payer', 'payers')}</dd></div>`
+    : '';
 
   root.innerHTML = `
     <p class="crumbs"><a href="#/">All bounties</a> · <a href="#/bounty/${encodeURIComponent(b.slug)}/leaderboard">Leaderboard</a></p>
@@ -142,7 +148,7 @@ export function bountyView(root, b) {
       <div><dt>Entry fee</dt><dd>${b.entryFeeUsd ? money(b.entryFeeUsd) : 'Free'}</dd></div>
       <div><dt>Time left</dt><dd><time data-deadline="${esc(b.deadline)}">${timeLeft(b.deadline, now)}</time></dd></div>
       <div><dt>Deadline</dt><dd>${date(b.deadline)}</dd></div>
-      ${b.entryFeesUsd ? `<div><dt>Fees paid in</dt><dd>${money(b.entryFeesUsd)} from ${plural(b.entryFeePayers ?? 0, 'payer', 'payers')}</dd></div>` : ''}
+      ${fees}
     </dl>
     <section aria-labelledby="rewards-h"><h2 id="rewards-h">Rewards</h2>${rewardsTable(b)}</section>
     <section aria-labelledby="about-h"><h2 id="about-h">About this bounty</h2><div class="prose">${md(b.description ?? '')}</div></section>
